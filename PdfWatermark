@@ -1,0 +1,75 @@
+using System;
+using System.IO;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Xobject;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.IO.Font.Constants;
+
+class Program
+{
+    static void Main()
+    {
+        // Simulate a PDF stream (Replace with an actual file stream if needed)
+        using FileStream inputPdfStream = new FileStream("input.pdf", FileMode.Open, FileAccess.Read);
+        using MemoryStream outputPdfStream = new MemoryStream();
+
+        // Read the existing PDF
+        PdfReader pdfReader = new PdfReader(inputPdfStream);
+        PdfWriter pdfWriter = new PdfWriter(outputPdfStream);
+        PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+
+        int totalPages = pdfDocument.GetNumberOfPages();
+        PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
+
+        for (int i = 1; i <= totalPages; i++)
+        {
+            PdfPage page = pdfDocument.GetPage(i);
+            PdfCanvas canvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDocument);
+
+            // Set watermark properties
+            canvas.SaveState();
+            canvas.SetFontAndSize(font, 60);
+            canvas.SetColor(ColorConstants.RED, true);
+            canvas.BeginText();
+
+            // Position watermark at the center of the page
+            float x = page.GetPageSize().GetWidth() / 2 - 100;
+            float y = page.GetPageSize().GetHeight() / 2;
+            canvas.MoveText(x, y);
+            canvas.ShowText("CONFIDENTIAL");  // Watermark text
+            canvas.EndText();
+            canvas.RestoreState();
+        }
+
+        pdfDocument.Close();
+
+        // Save the modified PDF
+        File.WriteAllBytes("output_with_watermark.pdf", outputPdfStream.ToArray());
+
+        Console.WriteLine("Watermark added successfully!");
+    }
+}
+
+
+
+
+
+
+
+using System.IO;
+using iText.Html2pdf;
+
+class Program
+{
+    static void Main()
+    {
+        string html = "<h1>Hello, PDF!</h1><p>This is a PDF created using iTextSharp.</p>";
+        using (FileStream stream = new FileStream("output.pdf", FileMode.Create))
+        {
+            HtmlConverter.ConvertToPdf(html, stream);
+        }
+        Console.WriteLine("PDF generated successfully!");
+    }
+}

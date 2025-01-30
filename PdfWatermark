@@ -73,3 +73,100 @@ class Program
         Console.WriteLine("PDF generated successfully!");
     }
 }
+
+
+class Program
+{
+    static void Main()
+    {
+        string htmlContent = "<h1>Hello, PDF!</h1><p>This is a PDF generated from HTML.</p>";
+
+        // Generate PDF from HTML
+        MemoryStream pdfStream = HtmlToPdfConverter.ConvertHtmlToPdf(htmlContent);
+
+        // Add watermark to the generated PDF
+        MemoryStream watermarkedPdfStream = PdfWatermarker.AddWatermarkToPdf(pdfStream, "CONFIDENTIAL");
+
+        // Save final PDF to a file
+        File.WriteAllBytes("final_output.pdf", watermarkedPdfStream.ToArray());
+
+        Console.WriteLine("PDF with watermark generated successfully!");
+    }
+}
+
+using System;
+using System.IO;
+using iText.Html2pdf;
+using iText.Kernel.Pdf;
+
+class HtmlToPdfConverter
+{
+    public static MemoryStream ConvertHtmlToPdf(string htmlContent)
+    {
+        MemoryStream outputPdfStream = new MemoryStream();
+        
+        // Convert HTML to PDF and write to MemoryStream
+        using (PdfWriter writer = new PdfWriter(outputPdfStream))
+        using (PdfDocument pdf = new PdfDocument(writer))
+        {
+            HtmlConverter.ConvertToPdf(htmlContent, pdf);
+        }
+        
+        // Reset stream position before returning
+        outputPdfStream.Position = 0;
+        return outputPdfStream;
+    }
+}
+
+
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.IO.Font.Constants;
+
+class PdfWatermarker
+{
+    public static MemoryStream AddWatermarkToPdf(MemoryStream inputPdfStream, string watermarkText)
+    {
+        MemoryStream outputPdfStream = new MemoryStream();
+
+        // Read PDF from stream
+        PdfReader pdfReader = new PdfReader(inputPdfStream);
+        PdfWriter pdfWriter = new PdfWriter(outputPdfStream);
+        PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+
+        int totalPages = pdfDocument.GetNumberOfPages();
+        PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
+
+        for (int i = 1; i <= totalPages; i++)
+        {
+            PdfPage page = pdfDocument.GetPage(i);
+            PdfCanvas canvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDocument);
+
+            // Set watermark properties
+            canvas.SaveState();
+            canvas.SetFontAndSize(font, 50);
+            canvas.SetColor(ColorConstants.RED, true);
+            canvas.BeginText();
+
+            // Position watermark in the center of the page
+            float x = page.GetPageSize().GetWidth() / 2 - 100;
+            float y = page.GetPageSize().GetHeight() / 2;
+            canvas.MoveText(x, y);
+            canvas.ShowText(watermarkText);
+            canvas.EndText();
+            canvas.RestoreState();
+        }
+
+        pdfDocument.Close();
+
+        // Reset stream position before returning
+        outputPdfStream.Position = 0;
+        return outputPdfStream;
+    }
+}
+
+
+
+

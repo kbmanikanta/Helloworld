@@ -167,6 +167,14 @@ class PdfWatermarker
     }
 }
 
+public static MemoryStream ConvertHtmlToPdf(string htmlContent)
+{
+    MemoryStream outputPdfStream = new MemoryStream();
+    HtmlConverter.ConvertToPdf(htmlContent, outputPdfStream);
+    outputPdfStream.Position = 0; // Reset position before returning
+    return outputPdfStream;
+}
+
 
 
 
